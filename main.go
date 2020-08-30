@@ -55,17 +55,6 @@ func main() {
 	bookingList = append(bookingList, *booking)
 	bookingList = append(bookingList, *booking)
 
-	/*
-		fmt.Println(string(bookingJSON))
-
-		newbooking := Booking{}
-		err = json.Unmarshal(bookingJSON, &newbooking)
-		if err != nil {
-			log.Fatal(err)
-		}
-		fmt.Printf("Booking name %s", newbooking.Name)
-	*/
-
 	http.HandleFunc("/booking", bookingHandler)
 	http.ListenAndServe(":5000", nil)
 }
