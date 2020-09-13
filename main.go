@@ -2,6 +2,9 @@ package main
 
 import (
 	"encoding/json"
+	"fmt"
+	"io"
+	"io/ioutil"
 	"net/http"
 )
 
@@ -15,8 +18,31 @@ type Booking struct {
 	Guests  int    `json:"guests"`
 }
 
+type Slot struct {
+	Start string
+	End   string
+	Type  string
+}
+
 var bookingList []Booking
 var booking Booking
+var slotList []Slot
+
+func slotHandler(w http.ResponseWriter, r *http.Request) {
+	if r.Method == http.MethodGet {
+		slotJSON, err := json.Marshal(slotList)
+		if err != nil {
+			w.WriteHeader(http.StatusInternalServerError)
+			return
+		}
+		w.Header().Set("Content-Type", "application/json")
+		w.Write(slotJSON)
+		return
+	} else {
+		w.WriteHeader(http.StatusMethodNotAllowed)
+		return
+	}
+}
 
 func bookingHandler(w http.ResponseWriter, r *http.Request) {
 	switch r.Method {
@@ -31,12 +57,18 @@ func bookingHandler(w http.ResponseWriter, r *http.Request) {
 		return
 
 	case http.MethodPost:
-		err := json.Unmarshal(r.Body, &booking)
-		if err != nil {
-			w.WriteHeader(http.StatusBadRequest)
-			return
+		reqString, err := ioutil.ReadAll(r.Body)
+		if err == nil {
+			err := json.Unmarshal(reqString, &booking)
+			if err != nil {
+				fmt.Println(err)
+				io.WriteString(w, "hello")
+				return
+			} else {
+				w.WriteHeader(http.StatusOK)
+				return
+			}
 		}
-		w.WriteHeader(http.StatusOK)
 		return
 	}
 }
@@ -55,6 +87,17 @@ func main() {
 	bookingList = append(bookingList, *booking)
 	bookingList = append(bookingList, *booking)
 
+	slot := &Slot{
+		Start: "2020-09-13 12:00:00",
+		End:   "2020-09-13 13:00:00",
+		Type:  "all",
+	}
+	slotList = append(slotList, *slot)
+	slotList = append(slotList, *slot)
+	slotList = append(slotList, *slot)
+	slotList = append(slotList, *slot)
+
 	http.HandleFunc("/booking", bookingHandler)
+	http.HandleFunc("/slot", slotHandler)
 	http.ListenAndServe(":5000", nil)
 }
